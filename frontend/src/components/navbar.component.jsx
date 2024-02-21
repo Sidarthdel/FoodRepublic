@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import {Link} from 'react-router-dom';
 import logo from '../imgs/logo.png';
 const Navbar = () =>{
+    const [searchBoxVisibility, setSearchBoxVisibility] = useState(false);
     return(
         <nav className="navbar">
         <Link to="/" className='flex-none w-10'>
@@ -18,6 +20,15 @@ const Navbar = () =>{
         <i className="fi fi-rr-search absolute right-[10%] 
         md:pointers-events-none md:left-5 top-1/2 -translate-y-1/2
         text-xl text-dark-grey"></i>
+        </div>
+        <div className='flex items-center gap-3 md:gap-6 ml-auto'>
+        <button className='md:hidden bg-grey w-12 h-12 rounded-full 
+        flex items-center justify-center'
+        onClick={
+            () => setSearchBoxVisibility(currentVal =>!currentVal)
+        }>
+            <i class="fi fi-rr-search text-xl"></i>
+            </button>    
         </div>
         </nav>
     )
