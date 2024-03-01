@@ -7,6 +7,7 @@ import jwt from 'jsonwebtoken';
 import cors from 'cors';
 
 import User from './Schema/User.js';
+import Blog from './Schema/Blog.js';
 
 const server = express();
 let PORT = 3000;
@@ -22,6 +23,26 @@ mongoose.connect(process.env.DB_LOCATION,
         autoIndex: true
     })
 
+
+const verifyJWT = (req, res,next) =>{
+
+const authHeader = req.headers['authorization'];
+const token = authHeader && authHeader.split(" ")[1];
+
+if (token == null) {
+    return res.status(401).json({error:"no access token"}) 
+}
+jwt.verify(token, process.env.SECRET_ACCESS_KEY, (err,user) =>{
+    if(err){
+        return res.status(403).json({error:"access token is invalid"})
+    }
+
+    req.user = user.id
+
+    next()
+})
+
+}    
 const formatDatatoSend = (user) => {
     const access_token = jwt.sign({ id: user._id }, process.env.SECRET_ACCESS_KEY)
     return {
@@ -112,7 +133,66 @@ server.post("/signin", (req, res) => {
         })
 })
 
-//server.post()
+//server.post() for chatgpt api should be created
+
+server.post('/create-blog',verifyJWT,(req,res)=>{
+
+    let authorId = req.user;
+    //banner, inside
+    let {title, des, tags, content, draft } = req.body;
+
+    if(!title.length){
+        return res.status(403).json({error:"title is required"})
+    }
+
+    if(!des.length || des.length > 200){
+        return res.status(403).json({error:"description is required and should be less than 200 characters"})
+    }
+
+    // if(!banner.length){
+    //     return res.status(403).json({error:"banner is required"})
+    // }
+
+    if(!content.blocks.length){
+        return res.status(403).json({error:"content is required"})
+    }
+    if(!tags.length || tags.length > 10){
+        return res.status(403).json({error:"tags are required and should be less than 10"}) 
+    }
+
+    tags = tags.map (tag => tag.toLowerCase());
+
+    let blog_id = title.replace(/[^a-zA-Z0-9]/g,' ').replace(/\s+/g, "-").trim() +nanoid();
+
+    //banner, inside
+    let blog = new Blog({
+        title,
+        des,
+        content,
+        tags,
+        author:authorId,
+        blog_id,
+        draft: Boolean(draft)
+    
+    })
+
+    blog.save().then(blog =>{
+       
+        let increamentVal = draft ? 0 : 1;
+
+        User.findOneAndUpdate({_id: authorId},{ $inc : {"account_info.total_posts":increamentVal},$push: {"blogs":blog._id}})
+        .then(user =>{
+            return res.status(200).json({id:blog.blog_id})
+        })
+        .catch(err =>{
+           return res.status(500).json({error:"failed to update post number"})
+    })
+    })
+    .catch(err =>{
+        return res.status(500).json({error:err.message})   
+    })
+    
+})
 
 
 server.listen(PORT, () => {

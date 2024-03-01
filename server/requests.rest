@@ -1,7 +1,14 @@
-POST http://localhost:3000/signup 
-Content-Type: application/json
 
-{   "fullname":"King Damien",
-    "email": "dameinking854@gmail.com",
-    "password": "Pfdfbd3"
+
+POST http://localhost:3000/create-blog
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1ZGUxNTIyZDVjMzFkYmY2NzkwODEyYSIsImlhdCI6MTcwOTA1MzIxOH0.LJzt30_Gx1UnCqKqKxUrc0-fCgUxBIScQYSEilGT0nk
+
+{
+    "title":"test 457title@12##3##4####$", 
+    "des":"frfrhf",
+    "content":{
+        "blocks":[1,2]
+    },
+    "tags":["tags1","tags2"]
 }
