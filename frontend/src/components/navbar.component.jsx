@@ -1,6 +1,6 @@
 import { useContext, useState } from "react";
 import { Link, Outlet } from "react-router-dom";
-import logo from "../imgs/logo.png";
+import logo from "../imgs/restaurant.png";
 import { UserContext } from "../App";
 import UserNavigationPanel from "./user-navigation.component";
 
@@ -55,7 +55,7 @@ const Navbar = () => {
           </button>
 
           <Link to="/editor" className="hidden md:flex gap-2 link">
-            <i className="fi fi-rr-file-edit"></i>
+            <i className="fi fi-rr-pen-nib "></i>
             <p>Write</p>
           </Link>
           {

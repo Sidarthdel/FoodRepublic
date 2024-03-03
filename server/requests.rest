@@ -1,14 +1,8 @@
 
 
-POST http://localhost:3000/create-blog
-Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1ZGUxNTIyZDVjMzFkYmY2NzkwODEyYSIsImlhdCI6MTcwOTA1MzIxOH0.LJzt30_Gx1UnCqKqKxUrc0-fCgUxBIScQYSEilGT0nk
+POST  http://localhost:3000/search-blogs
+Content-Type: application/application/json
 
 {
-    "title":"test 457title@12##3##4####$", 
-    "des":"frfrhf",
-    "content":{
-        "blocks":[1,2]
-    },
-    "tags":["tags1","tags2"]
+  "tag": "food"
 }
