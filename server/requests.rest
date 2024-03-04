@@ -1,8 +1,8 @@
 
 
-POST  http://localhost:3000/search-blogs
+POST  http://localhost:3000/search-users
 Content-Type: application/application/json
 
 {
-  "tag": "food"
+  "query": "abdhbcs"
 }
