@@ -40,6 +40,55 @@ const Publishform = () =>{
             e.preventDefault();
         }
     }
+
+    
+    const generateTags =(e) =>{
+
+     
+    if(e.target.className.includes('disable')){
+            return;
+        }   
+
+     if(!des.length || des.length > characterLimit){
+            return toast.error(`write description about food blog to produce tags`);
+        }
+    let loadingToast = toast.loading("generating tags");    
+
+    e.target.classList.add('disable');
+
+    let desObj = {des: des}
+    
+    axios.post(import.meta.env.VITE_SERVER_DOMAIN+"/generateTag",desObj)
+    .then(async (data)=>{
+    
+    console.log(data.data.tags)
+
+    let generatedTags = data.data.tags;
+    
+    setBlog({...blog, tags:[...tags,...generatedTags]})
+//     generatedTags.forEach(tag => {
+//         if(tags.length < tagLimit){
+//                 if(!tags.includes(tag)&& tag.length ){
+//                     setBlog({...blog, tags:[...tags,tag]})
+//                 }
+//             } else {
+//                 toast.error(`you can add only  maximum of ${tagLimit} tags`)
+//             }  
+    
+// }
+// );
+
+      
+    e.target.classList.remove('disable');
+    toast.dismiss(loadingToast);  
+    })
+    .catch(({response})=>{
+        e.target.classList.remove('disable');
+        toast.dismiss(loadingToast);
+
+    return toast.error(response.data.error)
+    })
+    }
  
     const handleKeyDown  = (e) =>{
         if(e.keyCode == 13 || e.keyCode == 188){
@@ -165,7 +214,14 @@ const Publishform = () =>{
                     )
                 })
                 }
-               
+                <div className="flex items-center gap-3 md:gap-6 ml-auto pt-4">
+                <button className="bg-white rounded-full px-8"
+                 onClick={generateTags}
+                 >
+                    Generate Tags
+                 </button>
+                </div>
+
                 </div>
                  <p className='mt-1 mb-4 text-dark-grey text-sm text-right'>{tagLimit - tags.length} Tags left</p>
 

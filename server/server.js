@@ -5,12 +5,16 @@ import bcrypt from 'bcrypt';
 import { nanoid } from 'nanoid';
 import jwt from 'jsonwebtoken';
 import cors from 'cors';
-
+import axios from 'axios';
+import  { OpenAI}  from "openai";
+// const { OpenAI } = require('openai');
 import User from './Schema/User.js';
 import Blog from './Schema/Blog.js';
 
 const server = express();
 let PORT = 3000;
+const openai = new OpenAI({apiKey: process.env.OPENAI_API_KEY});
+
 
 let emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/; // regex for email
 let passwordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,20}$/; // regex for password
@@ -133,7 +137,7 @@ server.post("/signin", (req, res) => {
         })
 })
 
-//server.post() for chatgpt api should be created
+
 
 
 server.post('/latest-blogs', (req, res) => {
@@ -358,6 +362,106 @@ server.post("/get-blog", (req, res) => {
             return res.status(500).json({ error: err.message });
         })
 })
+
+
+
+
+
+server.post('/generateTag',async (req,res)=>{
+
+try {
+    // Extract description from request body
+    const {des} = req.body;
+
+    // Construct prompt for GPT-3
+
+
+    const prompt = ` Generate tags for the following description related to the topic of food such that it can be classified into these following appropriate tags namely, Food-Recipe,Food-Review,Restaurant-Review blog:\n"${des}"\nTags:`;
+
+    // Call OpenAI GPT-3 API
+    // const completion = await openai.createChatCompletion({
+    //   model: "gpt-3.5-turbo",
+    //   prompt,
+    //   max_tokens: 200, // Adjust as needed
+    //   temperature: 0.7, // Adjust as needed
+    //   n: 5, // Number of completions
+    //   stop: '\n', // Stop when a new line is encountered
+    // });
+    const response = await openai.chat.completions.create({
+        model:'gpt-3.5-turbo',
+        messages: [
+          { role: "system", content: "you are an AI capable of  Generating tags for the food blog description that will be provided, also generate tags without hashtags in the beginning and limit the number of tags generated to atmost 2. Generate tags based on the relevance in a sorted order please be carefull and remove hastags from the ouput generated do  not add hashtags with the output generated "},
+
+          { role: "user", content: prompt },
+        ],
+        
+      });
+
+
+
+    const tags = response.choices[0].message.content.split(" ").slice(0,4);
+    //console.log(response.choices[0].message.content);
+    return res.json({tags:tags});
+//const tags = response.choices[0].message.content
+    // Extract tags from GPT-3 response
+    // const tags = completion.choices.map(choice => choice.text.trim());
+    // if (tags.length){
+    //     return res.status(200).json({ tags });
+
+    // }
+    // Send tags as response
+  } catch (error) {
+    console.error('Error generating tags:', error);
+
+
+    return res.json({ error: 'An error occurred while generating tags' });
+  }
+
+
+
+
+
+//  try {
+//     // Extract description from request body
+//     const { des } = req.body;
+
+//     //Construct prompt for GPT-3
+//     const prompt = `Generate tags for the following description:\n"${des}"\nTags:`;
+
+//     //Call OpenAI GPT-3 API
+//     const response = await axios.post('https://api.openai.com/v1/completions', {
+//       prompt,
+//       max_tokens: 50, 
+//       temperature: 0.7,
+//       n: 5, 
+//       stop: ['\n'],
+//     }, {
+//       headers: {
+//         'Content-Type': 'application/json',
+//         'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+//       },
+//     });
+
+//     //Extract tags from GPT-3 response
+//     const tags = response.data.choices.map(choice => choice.text.trim());
+
+//    // Send tags as response
+//     res.json({ tags });
+//   } catch (error) {
+//     console.error('Error generating tags:', error);
+//     res.status(500).json({ error: 'An error occurred while generating tags' });
+//   }
+
+// const configuration = new Configuration({
+//   apiKey: process.env.OPENAI_API_KEY,
+// });
+// const openai = new OpenAIApi(configuration);    
+
+// if(!des.length || des.length > 200){
+//         return res.status(403).json({error:"description is required"})
+//     } 
+})
+
 
 server.listen(PORT, () => {
     console.log('listening on port -> ' + PORT);
