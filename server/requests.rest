@@ -1,8 +1,16 @@
 
 
-POST  http://localhost:3000/search-users
-Content-Type: application/application/json
+# POST  http://localhost:3000/get-blog
+# Content-Type: application/json
+
+# {
+  
+#   "blog_id": "Highly-rated-2-DJz5IonkfGznxJB6kVM"
+# }
+
+POST  http://localhost:3000/get-profile
+Content-Type: application/json
 
 {
-  "query": "abdhbcs"
+  "username":"JohnDoe198"
 }
