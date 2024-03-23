@@ -11,7 +11,6 @@ import ProfilePage from "./pages/profile.page";
 import BlogPage from "./pages/blog.page";
 
 
-
 export const  UserContext = createContext({})
 
 const App = () => {

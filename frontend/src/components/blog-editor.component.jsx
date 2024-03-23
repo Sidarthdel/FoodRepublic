@@ -1,5 +1,5 @@
 import {Link} from "react-router-dom";
-import logo from "../imgs/logo.png";
+import logo from "../imgs/restaurant.png";
 import {useContext,useEffect} from "react";
 import AnimationWrapper from "../common/page-animation";
 import defaultBanner from"../imgs/blog banner.png";
@@ -83,8 +83,8 @@ const BlogEditor = () =>{
         
         <Toaster/>
         <nav className="navbar">
-            <Link to="/">
-                <img src={logo} className="flex-none w-10" />
+            <Link to="/" className="flex-none w-10">
+                <img src={logo} className="w-full" />
             </Link>
             <p className="max-md:hidden text-black line-clamp-1 w-full">
                 {title.length ? title : "untitled"}
