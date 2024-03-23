@@ -198,8 +198,6 @@ server.post("/search-users", (req, res) => {
 server.post("/search-blogs", (req, res) => {
 
     let { tag, query, author, page, limit, eliminate_blog} = req.body;
-    
-    let {query} = req.body;
 
     User.find({"personal_info.username": new RegExp(query,'i')})
     .limit(20)
