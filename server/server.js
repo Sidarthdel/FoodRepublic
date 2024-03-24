@@ -199,20 +199,6 @@ server.post("/search-users", (req, res) => {
         })
 })
 
-server.post("/search-blogs", (req, res) => {
-
-    let { tag, query, author, page, limit, eliminate_blog} = req.body;
-
-    User.find({"personal_info.username": new RegExp(query,'i')})
-    .limit(20)
-    .select("personal_info.fullname personal_info.username personal_info.profile_img -_id")
-    .then(users =>{
-        return res.status(200).json({users})
-    })
-    .catch(err =>{
-        return res.status(500).json({error:err.message})
-    })
-})
 
 server.post("/get-profile", (req,res) => {
     let { username } = req.body;
@@ -236,7 +222,7 @@ server.post("/search-blogs", (req, res) => {
     let findQuery;
 
     if (tag) {
-        findQuery = { tags: tag, draft: false, blog_id: { $ne: eliminate_blog } };
+        findQuery = { tags: tag, draft: false, blog_id: { $ne: eliminate_blog} };
     } else if (query) {
         findQuery = { draft: false, title: new RegExp(query, 'i') }
     } else if(author) {
