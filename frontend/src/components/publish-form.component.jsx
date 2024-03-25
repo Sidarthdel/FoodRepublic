@@ -80,7 +80,7 @@ const Publishform = () =>{
 
       
     e.target.classList.remove('disable');
-    toast.dismiss(loadingToast);  
+    toast.dismiss(loadingToast); 
     })
     .catch(({response})=>{
         e.target.classList.remove('disable');
