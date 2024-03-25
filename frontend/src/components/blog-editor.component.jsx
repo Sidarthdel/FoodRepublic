@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import logo from "../imgs/restaurant.png";
 import { useContext, useEffect } from "react";
 import AnimationWrapper from "../common/page-animation";
@@ -22,6 +22,7 @@ const BlogEditor = () => {
   } = useContext(EditorContext);
 
   let { userAuth: {access_token} } = useContext(UserContext)
+  let { blog_id } = useParams();
 
   let navigate = useNavigate();
 
@@ -30,7 +31,7 @@ const BlogEditor = () => {
         setTextEditor(
             new EditorJS({
               holderId: "textEditor",
-              data: content,
+              data: Array.isArray(content) ? content[0] : content,
               tools: tools,
               placeholder: "Write here....",
             })
@@ -129,7 +130,7 @@ const BlogEditor = () => {
                 tags,
                 draft: true
             }
-            axios.post(import.meta.env.VITE_SERVER_DOMAIN+"/create-blog",blogObj,{
+            axios.post(import.meta.env.VITE_SERVER_DOMAIN+"/create-blog", { ...blogObj, id: blog_id },{
                 headers:{
                     "Authorization":`Bearer ${access_token}`
                 }
