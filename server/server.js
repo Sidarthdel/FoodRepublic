@@ -167,6 +167,52 @@ server.post("/signin", (req, res) => {
         })
 })
 
+server.post("/change-password", verifyJWT, (req,res) =>{
+    let {currentPassword,newPassword} = req.body;
+
+    if(!passwordRegex.test(currentPassword) || !passwordRegex.test(newPassword)){
+
+            return res.status(403).json({error:"password should be 6 to 20 charcters long with a numeric, 1 lowercase and 1 uppercase letter"})
+
+        }
+
+    User.findOne({_id:req.user}).then((user) =>
+    {
+        // if(user.google_auth){
+        //   return res.status(403).json({error:"you are using google auth, you can't change password"})     
+        // }
+        bcrypt.compare(currentPassword, user.personal_info.password,(err,result)=>{
+            if(err){
+                return res.status(500).json({error:"error occurred while changing password, please try again"})
+            }
+
+            if(!result){
+                return res.status(403).json({error:"Incorrect current password"})
+            }
+
+            bcrypt.hash(newPassword, 10, (err, hashed_password) =>{
+                User.findOneAndUpdate({_id: req.user},{"personal_info.password":hashed_password})
+                .then((u) =>{
+                    return res.status(200).json({status:"password changed successfully"})
+                
+                })
+                .catch(err =>{
+                    return res.status(500).json({error:"error occurred while changing password, please try again"})
+                })
+            })
+        })
+
+    }
+    )
+    .catch(err =>{
+        console.log(err);
+        res.status(500).json({error:"user not found"})
+    })    
+
+
+})
+
+
 
 
 server.post('/latest-blogs', (req, res) => {
@@ -388,28 +434,17 @@ server.post("/get-blog", (req, res) => {
 
 server.post('/generateTag', async (req, res) => {
 
-    try {
-        // Extract description from request body
-        const { des } = req.body;
-
-        // Construct prompt for GPT-3
-
+try {
+    
+    const {des} = req.body;
 
         const prompt = ` Generate tags for the following description related to the topic of food such that it can be classified into these following appropriate tags namely, Food-Recipe,Food-Review,Restaurant-Review blog:\n"${des}"\nTags:`;
 
-        // Call OpenAI GPT-3 API
-        // const completion = await openai.createChatCompletion({
-        //   model: "gpt-3.5-turbo",
-        //   prompt,
-        //   max_tokens: 200, // Adjust as needed
-        //   temperature: 0.7, // Adjust as needed
-        //   n: 5, // Number of completions
-        //   stop: '\n', // Stop when a new line is encountered
-        // });
-        const response = await openai.chat.completions.create({
-            model: 'gpt-3.5-turbo',
-            messages: [
-                { role: "system", content: "you are an AI capable of  Generating tags for the food blog description that will be provided, also generate tags without hashtags in the beginning and limit the number of tags generated to atmost 2. Generate tags based on the relevance in a sorted order please be carefull and remove hastags from the ouput generated do  not add hashtags with the output generated " },
+    
+    const response = await openai.chat.completions.create({
+        model:'gpt-3.5-turbo',
+        messages: [
+          { role: "system", content: "you are an AI capable of  Generating tags for the food blog description that will be provided, also generate tags without hashtags in the beginning and limit the number of tags generated to atmost 2. Generate tags based on the relevance in a sorted order please be carefull and remove hastags from the ouput generated do  not add hashtags with the output generated "},
 
                 { role: "user", content: prompt },
             ],
@@ -418,19 +453,12 @@ server.post('/generateTag', async (req, res) => {
 
 
 
-        const tags = response.choices[0].message.content.split(" ").slice(0, 4);
-        //console.log(response.choices[0].message.content);
-        return res.json({ tags: tags });
-        //const tags = response.choices[0].message.content
-        // Extract tags from GPT-3 response
-        // const tags = completion.choices.map(choice => choice.text.trim());
-        // if (tags.length){
-        //     return res.status(200).json({ tags });
+    const tags = response.choices[0].message.content.split(" ").slice(0,4);
+   
+    return res.json({tags:tags});
 
-        // }
-        // Send tags as response
-    } catch (error) {
-        console.error('Error generating tags:', error);
+  } catch (error) {
+    console.error('Error generating tags:', error);
 
 
         return res.json({ error: 'An error occurred while generating tags' });
@@ -438,47 +466,39 @@ server.post('/generateTag', async (req, res) => {
 
 
 
+})
+
+server.post('/generateSummary',async (req,res)=>{
+
+try {
+    
+    const {des} = req.body;
+    
+    const prompt = ` Generate tags for the following description related to the topic of food such that it can be classified into these following appropriate tags namely, Food-Recipe,Food-Review,Restaurant-Review blog:\n"${des}"\nTags:`;
+
+    
+    const response = await openai.chat.completions.create({
+        model:'gpt-3.5-turbo',
+        messages: [
+          { role: "system", content: "you are an AI capable of  Generating tags for the food blog description that will be provided, also generate tags without hashtags in the beginning and limit the number of tags generated to atmost 2. Generate tags based on the relevance in a sorted order please be carefull and remove hastags from the ouput generated do  not add hashtags with the output generated "},
+
+          { role: "user", content: prompt },
+        ],
+        
+      });
 
 
-    //  try {
-    //     // Extract description from request body
-    //     const { des } = req.body;
 
-    //     //Construct prompt for GPT-3
-    //     const prompt = `Generate tags for the following description:\n"${des}"\nTags:`;
+    const tags = response.choices[0].message.content.split(" ").slice(0,4);
+   
+    return res.json({tags:tags});
 
-    //     //Call OpenAI GPT-3 API
-    //     const response = await axios.post('https://api.openai.com/v1/completions', {
-    //       prompt,
-    //       max_tokens: 50, 
-    //       temperature: 0.7,
-    //       n: 5, 
-    //       stop: ['\n'],
-    //     }, {
-    //       headers: {
-    //         'Content-Type': 'application/json',
-    //         'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-    //       },
-    //     });
+  } catch (error) {
+    console.error('Error generating tags:', error);
 
-    //     //Extract tags from GPT-3 response
-    //     const tags = response.data.choices.map(choice => choice.text.trim());
 
-    //    // Send tags as response
-    //     res.json({ tags });
-    //   } catch (error) {
-    //     console.error('Error generating tags:', error);
-    //     res.status(500).json({ error: 'An error occurred while generating tags' });
-    //   }
-
-    // const configuration = new Configuration({
-    //   apiKey: process.env.OPENAI_API_KEY,
-    // });
-    // const openai = new OpenAIApi(configuration);    
-
-    // if(!des.length || des.length > 200){
-    //         return res.status(403).json({error:"description is required"})
-    //     } 
+    return res.json({ error: 'An error occurred while generating tags' });
+  }
 })
 
 

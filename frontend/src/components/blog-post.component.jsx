@@ -1,5 +1,6 @@
 import { getDay } from "../common/date";
 import { Link } from "react-router-dom";
+import { useState } from "react";
 
 const BlogPostCard = ({ content, author }) => {
   let {

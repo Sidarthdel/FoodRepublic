@@ -7,6 +7,8 @@ import { getDay } from "../common/date";
 import BlogInteraction from "../components/blog-interaction.component";
 import BlogPostCard from "../components/blog-post.component";
 import BlogContent from "../components/blog-content.component";
+import {Toaster,toast}  from 'react-hot-toast';
+
 
 export const blogStructure = {
     title: '',
@@ -26,6 +28,7 @@ const BlogPage = () => {
     const [blog, setBlog] = useState(blogStructure);
     const [similarBlogs, setSimilarBlogs] = useState(null);
     const [loading, setLoading] = useState(true);
+    const[isSummaryGenerated, setIsSummaryGenerated] = useState(false);
 
     let { title, content, banner, author: {personal_info: {fullname, username: author_username, profile_img}}, publishedAt } = blog;
 
@@ -48,6 +51,38 @@ const BlogPage = () => {
             console.log(err);
             setLoading(false);
         })
+    }
+
+    const generateSummary = (e) =>{
+       if(!isSummaryGenerated){
+    //      let loadingToast = toast.loading("generating summary");    
+
+    // e.target.classList.add('disable');
+
+    // let contentObj = {content: content}
+    
+    // axios.post(import.meta.env.VITE_SERVER_DOMAIN+"/generateSummary",contentObj)
+    // .then(async (data)=>{
+    
+    // console.log(data.data.tags)
+
+    // let generatedTags = data.data.tags;
+    
+    // setBlog({...blog, tags:[...tags,...generatedTags]})
+
+      
+    // e.target.classList.remove('disable');
+    // toast.dismiss(loadingToast); 
+    setIsSummaryGenerated(true); 
+    }
+    //)
+    // .catch(({response})=>{
+    //     e.target.classList.remove('disable');
+    //     toast.dismiss(loadingToast);
+
+    // return toast.error(response.data.error)
+    // })
+    //   } 
     }
 
     useEffect(() => {
@@ -87,8 +122,20 @@ const BlogPage = () => {
                             <p className="text-dark-grey opacity-75 max-sm:mt-6 max-sm:ml-12 max-sm:pl-5" >Published on {getDay(publishedAt)} </p>
                         </div>
                     </div>
-
+                   
                     <BlogInteraction/>
+                    <div >
+                    {
+                        !isSummaryGenerated ? <button className="bg-grey rounded-full px-8"
+                         onClick={generateSummary}
+                        >
+                        Generate Summary
+                    </button> : 
+                    <section className="bg-grey">
+                        <h1>summary</h1>
+                    </section>
+                    }
+                    </div>
 
                     <div className="my-12 font-gelasio blog-page-content" >
                         {
