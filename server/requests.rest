@@ -8,14 +8,20 @@
 #   "blog_id": "Highly-rated-2-DJz5IonkfGznxJB6kVM"
 # }
 
-POST  http://localhost:3000/get-profile
-Content-Type: application/json
-POST http://localhost:3000/get-profile
+# POST  http://localhost:3000/get-profile
+# Content-Type: application/json
+# POST http://localhost:3000/get-profile
+# Content-Type: application/json
+
+# {
+#   "username":"JohnDoe198"
+# POST http://localhost:3000/get-profile
+# Content-Type: application/json
+# }
+
+POST http://localhost:3000/get-blog
 Content-Type: application/json
 
 {
-  "username":"JohnDoe198"
-POST http://localhost:3000/get-profile
-Content-Type: application/json
+    "blog_id": "-Authentic-Pizza-Delight-in-Kochigel3SHx6dAZVMV3xMV54T"
 }
-

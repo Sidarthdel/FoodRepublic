@@ -32,7 +32,7 @@ const BlogPage = () => {
     const fetchBlog = () => {
         axios.post(import.meta.env.VITE_SERVER_DOMAIN + "/get-blog", { blog_id })
         .then(({data: {blog}}) => {
-
+            console.log(blog)
             setBlog(blog)
             
             axios.post(import.meta.env.VITE_SERVER_DOMAIN + "/search-blogs", {tag: blog.tags[0], limit: 6, eliminate_blog: blog_id})

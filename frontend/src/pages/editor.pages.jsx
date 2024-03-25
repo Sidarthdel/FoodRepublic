@@ -5,9 +5,10 @@ import BlogEditor from '../components/blog-editor.component';
 import Publishform from '../components/publish-form.component';
 import {createContext} from 'react';
 
-// add this inside- banner: '',
+
 const blogStructure = {
     title: '',
+    banner:  '',  
     content: [],
     tags: [],
     des: '',
