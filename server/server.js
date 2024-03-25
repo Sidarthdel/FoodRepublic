@@ -323,12 +323,14 @@ server.post("/search-blogs", (req, res) => {
 })
 
 server.post("/search-blogs-count", (req, res) => {
-    let { tag, query } = req.body;
+    let { tag, author, query } = req.body;
     let findQuery;
     if (tag) {
         findQuery = { tags: tag, draft: false };
     } else if (query) {
         findQuery = { draft: false, title: new RegExp(query, 'i') }
+    } else if (author) {
+        findQuery = { author, draft: false }
     }
 
     Blog.countDocuments(findQuery)
@@ -345,7 +347,7 @@ server.post('/create-blog', verifyJWT, (req, res) => {
 
     let authorId = req.user;
 
-    let { title, des, banner, tags, content, draft } = req.body;
+    let { title, des, banner, tags, content, draft, id } = req.body;
 
     if (!title.length) {
         return res.status(403).json({ error: "Title is required" })
@@ -370,10 +372,20 @@ server.post('/create-blog', verifyJWT, (req, res) => {
 
     tags = tags.map(tag => tag.toLowerCase());
 
-    let blog_id = title.replace(/[^a-zA-Z0-9]/g, ' ').replace(/\s+/g, "-").trim() + nanoid();
+    let blog_id = id ||  title.replace(/[^a-zA-Z0-9]/g, ' ').replace(/\s+/g, "-").trim() + nanoid();
 
+    if(id){
 
-    let blog = new Blog({
+        Blog.findOneAndUpdate({ blog_id }, { title, des, banner, content, tags, draft: draft ? draft : false })
+        .then( () => {
+            return res.status(200).json({ id:blog_id });
+        })
+        .catch(err => {
+            return res.status(500).json({ error : "err.message" })
+        })
+
+    } else{
+        let blog = new Blog({
         title,
         des,
         banner,
@@ -401,13 +413,17 @@ server.post('/create-blog', verifyJWT, (req, res) => {
             return res.status(500).json({ error: err.message })
         })
 
+    }
+
+   
+
 })
 
 server.post("/get-blog", (req, res) => {
 
-    let { blog_id } = req.body;
+    let { blog_id, draft, mode } = req.body;
 
-    let incrementVal = 1;
+    let incrementVal = mode!='edit' ? 1 : 0;
 
     Blog.findOneAndUpdate({ blog_id }, { $inc: { "activity.total_reads": incrementVal } })
         .populate("author", "personal_info.fullname personal_info.username personal_info.profile_img")
@@ -420,6 +436,10 @@ server.post("/get-blog", (req, res) => {
                 .catch(err => {
                     return res.status(500).json({ error: err.message })
                 })
+
+                if(blog.draft && !draft){
+                    return res.status(500).json({ error: 'you cannot access draft blogs.' })
+                }
 
             return res.status(200).json({ blog });
         })
