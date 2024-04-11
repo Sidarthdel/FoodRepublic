@@ -17,7 +17,7 @@ const HomePage = () =>{
     let [trendingBlogs, setTrendingBlogs] = useState(null);
     let [pageState, setPageState] = useState("home");
 
-    let categories = ["kochi foodspot","highly rated food","craving cure","cooking"]
+    let categories = ["Personal","Recipe","Restaurant"]
 
     const fetchLatestBlogs = ({page =1}) =>{
 
@@ -138,7 +138,7 @@ const HomePage = () =>{
                      <h1 className="font-medium text-xl mb-8">Foodie's Corner</h1>
                     <div className="flex gap-3 flex-wrap">{
                         categories.map((category, i) =>{
-                            return <button className={"tag " + (pageState == category ? " bg-black text-white" : " ") } onClick={loadBlogByCategory}>
+                            return <button className={"tag " + (pageState == category ? " bg-black text-white " : " ") } onClick={loadBlogByCategory}>
                                 {category}
                             </button>
                         })

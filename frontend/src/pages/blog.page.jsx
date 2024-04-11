@@ -29,9 +29,10 @@ const BlogPage = () => {
     const [similarBlogs, setSimilarBlogs] = useState(null);
     const [loading, setLoading] = useState(true);
     const[isSummaryGenerated, setIsSummaryGenerated] = useState(false);
+    const[generatedSummary, setGeneratedSummary] = useState('');
 
     let { title, content, banner, author: {personal_info: {fullname, username: author_username, profile_img}}, publishedAt } = blog;
-
+    
     const fetchBlog = () => {
         axios.post(import.meta.env.VITE_SERVER_DOMAIN + "/get-blog", { blog_id })
         .then(({data: {blog}}) => {
@@ -53,37 +54,76 @@ const BlogPage = () => {
         })
     }
 
+    
     const generateSummary = (e) =>{
        if(!isSummaryGenerated){
-    //      let loadingToast = toast.loading("generating summary");    
+         let loadingToast = toast.loading("generating summary"); 
 
-    // e.target.classList.add('disable');
+    let contents;
+    contents +=String(title);
+    e.target.classList.add('disable');
 
-    // let contentObj = {content: content}
+
+        content[0].blocks.map((block, i) => {
     
-    // axios.post(import.meta.env.VITE_SERVER_DOMAIN+"/generateSummary",contentObj)
-    // .then(async (data)=>{
-    
-    // console.log(data.data.tags)
+        let { type, data } = block;
+        if (type == "paragraph") {
+        
+        contents+=' ' +String(data.text);
+        }
 
-    // let generatedTags = data.data.tags;
-    
-    // setBlog({...blog, tags:[...tags,...generatedTags]})
+        if (type == "header") {
+             if (data.level == 3) {
+                contents+=' ' +String(data.text);
+        }else{
 
-      
-    // e.target.classList.remove('disable');
-    // toast.dismiss(loadingToast); 
+            contents+=' ' +String(data.text);
+
+        }
+           
+        }
+
+        if(type == "quote"){
+           
+            contents+=' ' +String(data.text)
+        }
+
+        if(type == "list"){
+
+            let items = data.items
+            items.map((listItem, i) => {
+                    
+                 contents+=' ' +String(listItem)
+                })
+        }
+               
+        })
+        
+    contents = contents.replace('undefined','').replace('<br>','').replace('&nbsp','')
+    let contentObj = {contents: contents}
+    
+    axios.post(import.meta.env.VITE_SERVER_DOMAIN+"/generateSummary",contentObj)
+    .then(async (data)=>{
+    
+    let genSummary= data.data.summary;
+    setGeneratedSummary(genSummary);
+    
+    
+    e.target.classList.remove('disable');
+    toast.dismiss(loadingToast); 
     setIsSummaryGenerated(true); 
-    }
-    //)
-    // .catch(({response})=>{
-    //     e.target.classList.remove('disable');
-    //     toast.dismiss(loadingToast);
 
-    // return toast.error(response.data.error)
-    // })
-    //   } 
+
     }
+    )
+    .catch(({response})=>{
+        e.target.classList.remove('disable');
+        toast.dismiss(loadingToast);
+
+    return toast.error(response.data.error)
+    })
+      } 
+     }
 
     useEffect(() => {
         resetStates();
@@ -124,6 +164,7 @@ const BlogPage = () => {
                     </div>
                    
                     <BlogInteraction/>
+                     <Toaster />
                     <div >
                     {
                         !isSummaryGenerated ? <button className="bg-grey rounded-full px-8"
@@ -132,7 +173,7 @@ const BlogPage = () => {
                         Generate Summary
                     </button> : 
                     <section className="bg-grey">
-                        <h1>summary</h1>
+                        <p>{generatedSummary}</p>
                     </section>
                     }
                     </div>

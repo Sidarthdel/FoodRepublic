@@ -32,11 +32,13 @@ const BlogContent = ({ block }) => {
   let { type, data } = block;
 
   if (type == "paragraph") {
+    
     return <p dangerouslySetInnerHTML={{ __html: data.text }}></p>;
   }
 
   if (type == "header") {
     if (data.level == 3) {
+      
       return (
         <h3
           className="text-3xl font-bold"
@@ -44,6 +46,7 @@ const BlogContent = ({ block }) => {
         ></h3>
       );
     }
+    
     return (
       <h2
         className="text-3xl font-bold"
@@ -53,14 +56,17 @@ const BlogContent = ({ block }) => {
   }
   
   if(type == "image") {
+   
     return <Img url={data.file.url} caption={data.caption} />
   }
 
   if(type == "quote"){
+    
     return <Quote quote={data.text} caption={data.caption}/>
   }
 
   if(type == "list"){
+   
     return <List style={data.style} items={data.items} />
   }
 };

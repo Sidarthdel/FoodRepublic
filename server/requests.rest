@@ -19,9 +19,10 @@
 # Content-Type: application/json
 # }
 
-POST http://localhost:3000/get-blog
+POST http://localhost:3000/generateSummary
 Content-Type: application/json
 
 {
-    "blog_id": "-Authentic-Pizza-Delight-in-Kochigel3SHx6dAZVMV3xMV54T"
+    "contents": "Yesterday, I embarked on a delightful gastronomic journey with a plate of authentic Italian spaghetti. From the moment the savory aroma of simmering tomato sauce reached my senses, I knew I was in for a treat. As I took my first forkful, the perfectly cooked strands of pasta embraced the rich, tangy sauce, each mouthful bursting with flavor. The al dente texture of the spaghetti lent just the right amount of bite, transporting me to the bustling streets of Italy with every twirl. What truly elevated this dish was its simplicity. The sauce, a harmonious blend of ripe tomatoes, aromatic garlic, fragrant basil, and a hint of olive oil, showcased the essence of Italian cuisine. Each ingredient spoke for itself, yet together they created a symphony of taste that danced on my palate. Accompanying the spaghetti was a generous sprinkling of freshly grated Parmesan cheese, adding a creamy richness that complemented the acidity of the tomatoes perfectly. Every bite was a crescendo of flavors, leaving me craving for more long after the plate was empty. As I savored each mouthful, I couldn't help but appreciate the artistry and tradition behind this classic Italian dish. It wasn't just a meal; it was a culinary experience that transported me across continents and through time, reminding me of the simple pleasures that good food brings. In conclusion, my encounter with this Italian spaghetti was nothing short of extraordinary. It reignited my love for authentic cuisine and left me longing for another taste of Italy's culinary wonders. Truly, it was a dish to savor and cherish, one that will linger in my memory for years to come."
+
 }

@@ -8,6 +8,7 @@ import axios from "axios";
 import { storeInSession } from "../common/session";
 import { UserContext } from "../App";
 import { Navigate } from "react-router-dom"; 
+import { authWithGoogle } from "../common/firebase";
 
 const UserAuthForm = ({ type }) => {
 
@@ -69,6 +70,26 @@ const UserAuthForm = ({ type }) => {
     userAuthThroughServer(serverRoute, formData);
   };
 
+  const handleGoogleAuth = (e) =>{
+    e.preventDefault();
+
+    authWithGoogle().then(user =>{
+      let serverRoute = "/google-auth";
+
+      let formData = {
+        access_token: user.accessToken
+      }
+
+      userAuthThroughServer(serverRoute, formData)
+    })
+    .catch(err =>{
+      toast.error('failed google login')
+
+      return console.log(err)
+    
+    })
+  }
+
   return (
     access_token ?
     <Navigate to="/"/>
@@ -120,8 +141,9 @@ const UserAuthForm = ({ type }) => {
             <hr className="w-1/2 border-black" />
           </div>
 
-          <button className="btn-dark flex items-center justify-center gap-4 w-[90%] center">
-            <img src={googleIcon} className="w-5" />
+          <button className="btn-dark flex items-center justify-center gap-4 w-[90%] center"  onClick={handleGoogleAuth}>
+            <img src={googleIcon} className="w-5" 
+           />
             continue with google
           </button>
 

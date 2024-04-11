@@ -6,16 +6,20 @@ import { nanoid } from 'nanoid';
 import jwt from 'jsonwebtoken';
 import cors from 'cors';
 import aws from "aws-sdk";
-import axios from 'axios';
+import admin from 'firebase-admin';
+import serviceAccountKey from "./food-republic-16951-firebase-adminsdk-6ru9h-80ac4c04ee.json" assert { type: "json" };
 import { OpenAI } from "openai";
-// const { OpenAI } = require('openai');
 import User from './Schema/User.js';
 import Blog from './Schema/Blog.js';
+import { getAuth } from 'firebase-admin/auth';
 
 const server = express();
 let PORT = 3000;
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccountKey)
+})
 
 let emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/; // regex for email
 let passwordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,20}$/; // regex for password
@@ -149,16 +153,23 @@ server.post("/signin", (req, res) => {
                     return res.status(403).json({ "error": "email not found" })
                 }
 
-                bcrypt.compare(password, user.personal_info.password, (err, result) => {
-                    if (err) {
-                        return res.status(403).json({ "error": "error occurred while login please try again" });
-                    }
-                    if (!result) {
-                        return res.status(403).json({ "error": "Incorrect password" });
-                    } else {
-                        return res.status(200).json(formatDatatoSend(user))
-                    }
-                })
+                if(!user.google_auth){
+
+                    bcrypt.compare(password, user.personal_info.password, (err, result) => {
+                        if (err) {
+                            return res.status(403).json({ "error": "error occurred while login please try again" });
+                        }
+                        if (!result) {
+                            return res.status(403).json({ "error": "Incorrect password" });
+                        } else {
+                            return res.status(200).json(formatDatatoSend(user))
+                        }
+                    })
+
+                } else {
+                    return res.status(403).json({"error":"Account was created using google. Try logging in with google sign in"})
+                }
+
 
             }
         ).catch(err => {
@@ -166,6 +177,51 @@ server.post("/signin", (req, res) => {
             return res.status(500).json({ "error": err.message })
         })
 })
+
+server.post("/google-auth", async (req,res) =>{
+    
+    let {access_token} = req.body
+
+    getAuth()
+    .verifyIdToken(access_token)
+    .then(async (decodedUser) =>{
+        let { email, name, picture} = decodedUser;
+
+        picture = picture.replace("s96-c","s384-c");
+
+        let user = await User.findOne({"personal_info.email":email}).select("personal_info.fullname personal_info.username personal_info.profile_img google_auth")
+        .then((u) => {return u || null})
+        .catch(err =>{ return res.status(500).json({"error":err.message})})
+
+        if(user){
+            if(!user.google_auth){
+                return res.status(403).json({"error": "This email was signed up without google. Please login with password to access the account"})
+            }
+        }
+        else{
+            let username = await generateUsername(email);
+            user = new User({
+                personal_info:{fullname:name, email, profile_img: picture, username},
+                google_auth: true
+            })
+
+            await user.save().then((u) =>{
+                user = u;
+            })
+            .catch(err =>{
+                return res.status(500).json({"error":err.message})
+            })
+        }
+
+        return res.status(200).json(formatDatatoSend(user))
+
+    })
+    .catch(err =>{
+        return res.status(500).json({"error":"failed to authenticate with google, try signing in with another account"})
+    })
+
+})
+
 
 server.post("/change-password", verifyJWT, (req,res) =>{
     let {currentPassword,newPassword} = req.body;
@@ -211,6 +267,8 @@ server.post("/change-password", verifyJWT, (req,res) =>{
 
 
 })
+
+
 
 
 
@@ -492,26 +550,25 @@ server.post('/generateSummary',async (req,res)=>{
 
 try {
     
-    const {des} = req.body;
+    const {contents} = req.body;
     
-    const prompt = ` Generate tags for the following description related to the topic of food such that it can be classified into these following appropriate tags namely, Food-Recipe,Food-Review,Restaurant-Review blog:\n"${des}"\nTags:`;
+    const prompt = ` Generate summary for the following blog related to the topic namely, Food-Recipe,Food-Review,Restaurant-Review blog:\n"${contents}"\nTags:`;
 
     
     const response = await openai.chat.completions.create({
         model:'gpt-3.5-turbo',
         messages: [
-          { role: "system", content: "you are an AI capable of  Generating tags for the food blog description that will be provided, also generate tags without hashtags in the beginning and limit the number of tags generated to atmost 2. Generate tags based on the relevance in a sorted order please be carefull and remove hastags from the ouput generated do  not add hashtags with the output generated "},
+          { role: "system", content: "you are an AI capable of  generating summary for the a blog that will be provided, generate summary that is relevant to the blog content and generate summary that is between 300 and 400 characters in length "},
 
           { role: "user", content: prompt },
-        ],
+        ]
         
       });
 
+    const summary =response.choices[0].message.content
+    return  res.json({summary:summary})
 
-
-    const tags = response.choices[0].message.content.split(" ").slice(0,4);
-   
-    return res.json({tags:tags});
+    
 
   } catch (error) {
     console.error('Error generating tags:', error);
