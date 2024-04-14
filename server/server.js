@@ -11,6 +11,7 @@ import serviceAccountKey from "./food-republic-16951-firebase-adminsdk-6ru9h-80a
 import { OpenAI } from "openai";
 import User from './Schema/User.js';
 import Blog from './Schema/Blog.js';
+import Notification from "./Schema/Notification.js"
 import { getAuth } from 'firebase-admin/auth';
 
 const server = express();
@@ -153,7 +154,7 @@ server.post("/signin", (req, res) => {
                     return res.status(403).json({ "error": "email not found" })
                 }
 
-                if(!user.google_auth){
+                if (!user.google_auth) {
 
                     bcrypt.compare(password, user.personal_info.password, (err, result) => {
                         if (err) {
@@ -167,7 +168,7 @@ server.post("/signin", (req, res) => {
                     })
 
                 } else {
-                    return res.status(403).json({"error":"Account was created using google. Try logging in with google sign in"})
+                    return res.status(403).json({ "error": "Account was created using google. Try logging in with google sign in" })
                 }
 
 
@@ -178,92 +179,91 @@ server.post("/signin", (req, res) => {
         })
 })
 
-server.post("/google-auth", async (req,res) =>{
-    
-    let {access_token} = req.body
+server.post("/google-auth", async (req, res) => {
+
+    let { access_token } = req.body
 
     getAuth()
-    .verifyIdToken(access_token)
-    .then(async (decodedUser) =>{
-        let { email, name, picture} = decodedUser;
+        .verifyIdToken(access_token)
+        .then(async (decodedUser) => {
+            let { email, name, picture } = decodedUser;
 
-        picture = picture.replace("s96-c","s384-c");
+            picture = picture.replace("s96-c", "s384-c");
 
-        let user = await User.findOne({"personal_info.email":email}).select("personal_info.fullname personal_info.username personal_info.profile_img google_auth")
-        .then((u) => {return u || null})
-        .catch(err =>{ return res.status(500).json({"error":err.message})})
+            let user = await User.findOne({ "personal_info.email": email }).select("personal_info.fullname personal_info.username personal_info.profile_img google_auth")
+                .then((u) => { return u || null })
+                .catch(err => { return res.status(500).json({ "error": err.message }) })
 
-        if(user){
-            if(!user.google_auth){
-                return res.status(403).json({"error": "This email was signed up without google. Please login with password to access the account"})
+            if (user) {
+                if (!user.google_auth) {
+                    return res.status(403).json({ "error": "This email was signed up without google. Please login with password to access the account" })
+                }
             }
-        }
-        else{
-            let username = await generateUsername(email);
-            user = new User({
-                personal_info:{fullname:name, email, profile_img: picture, username},
-                google_auth: true
-            })
+            else {
+                let username = await generateUsername(email);
+                user = new User({
+                    personal_info: { fullname: name, email, profile_img: picture, username },
+                    google_auth: true
+                })
 
-            await user.save().then((u) =>{
-                user = u;
-            })
-            .catch(err =>{
-                return res.status(500).json({"error":err.message})
-            })
-        }
+                await user.save().then((u) => {
+                    user = u;
+                })
+                    .catch(err => {
+                        return res.status(500).json({ "error": err.message })
+                    })
+            }
 
-        return res.status(200).json(formatDatatoSend(user))
+            return res.status(200).json(formatDatatoSend(user))
 
-    })
-    .catch(err =>{
-        return res.status(500).json({"error":"failed to authenticate with google, try signing in with another account"})
-    })
+        })
+        .catch(err => {
+            return res.status(500).json({ "error": "failed to authenticate with google, try signing in with another account" })
+        })
 
 })
 
 
-server.post("/change-password", verifyJWT, (req,res) =>{
-    let {currentPassword,newPassword} = req.body;
+server.post("/change-password", verifyJWT, (req, res) => {
+    let { currentPassword, newPassword } = req.body;
 
-    if(!passwordRegex.test(currentPassword) || !passwordRegex.test(newPassword)){
+    if (!passwordRegex.test(currentPassword) || !passwordRegex.test(newPassword)) {
 
-            return res.status(403).json({error:"password should be 6 to 20 charcters long with a numeric, 1 lowercase and 1 uppercase letter"})
+        return res.status(403).json({ error: "password should be 6 to 20 charcters long with a numeric, 1 lowercase and 1 uppercase letter" })
 
-        }
+    }
 
-    User.findOne({_id:req.user}).then((user) =>
-    {
+    User.findOne({ _id: req.user }).then((user) => {
         // if(user.google_auth){
         //   return res.status(403).json({error:"you are using google auth, you can't change password"})     
         // }
-        bcrypt.compare(currentPassword, user.personal_info.password,(err,result)=>{
-            if(err){
-                return res.status(500).json({error:"error occurred while changing password, please try again"})
+        bcrypt.compare(currentPassword, user.personal_info.password, (err, result) => {
+            if (err) {
+                return res.status(500).json({ error: "error occurred while changing password, please try again" })
             }
 
-            if(!result){
-                return res.status(403).json({error:"Incorrect current password"})
+            if (!result) {
+                return res.status(403).json({ error: "Incorrect current password" })
             }
 
-            bcrypt.hash(newPassword, 10, (err, hashed_password) =>{
-                User.findOneAndUpdate({_id: req.user},{"personal_info.password":hashed_password})
-                .then((u) =>{
-                    return res.status(200).json({status:"password changed successfully"})
-                
-                })
-                .catch(err =>{
-                    return res.status(500).json({error:"error occurred while changing password, please try again"})
-                })
+            bcrypt.hash(newPassword, 10, (err, hashed_password) => {
+                User.findOneAndUpdate({ _id: req.user }, { "personal_info.password": hashed_password })
+                    .then((u) => {
+                        return res.status(200).json({ status: "password changed successfully" })
+
+                    })
+                    .catch(err => {
+                        return res.status(500).json({ error: "error occurred while changing password, please try again" })
+                    })
             })
         })
 
     }
     )
-    .catch(err =>{
-        console.log(err);
-        res.status(500).json({error:"user not found"})
-    })    
+        .catch(err => {
+            console.log(err);
+            res.status(500).json({ error: "user not found" })
+        })
 
 
 })
@@ -276,7 +276,7 @@ server.post("/change-password", verifyJWT, (req,res) =>{
 server.post('/latest-blogs', (req, res) => {
 
     let { page } = req.body;
-    
+
     let maxLimit = 3;
 
     Blog.find({ draft: false })
@@ -430,50 +430,50 @@ server.post('/create-blog', verifyJWT, (req, res) => {
 
     tags = tags.map(tag => tag.toLowerCase());
 
-    let blog_id = id ||  title.replace(/[^a-zA-Z0-9]/g, ' ').replace(/\s+/g, "-").trim() + nanoid();
+    let blog_id = id || title.replace(/[^a-zA-Z0-9]/g, ' ').replace(/\s+/g, "-").trim() + nanoid();
 
-    if(id){
+    if (id) {
 
         Blog.findOneAndUpdate({ blog_id }, { title, des, banner, content, tags, draft: draft ? draft : false })
-        .then( () => {
-            return res.status(200).json({ id:blog_id });
-        })
-        .catch(err => {
-            return res.status(500).json({ error : "err.message" })
-        })
-
-    } else{
-        let blog = new Blog({
-        title,
-        des,
-        banner,
-        content,
-        tags,
-        author: authorId,
-        blog_id,
-        draft: Boolean(draft)
-
-    })
-
-    blog.save().then(blog => {
-
-        let increamentVal = draft ? 0 : 1;
-
-        User.findOneAndUpdate({ _id: authorId }, { $inc: { "account_info.total_posts": increamentVal }, $push: { "blogs": blog._id } })
-            .then(user => {
-                return res.status(200).json({ id: blog.blog_id })
+            .then(() => {
+                return res.status(200).json({ id: blog_id });
             })
             .catch(err => {
-                return res.status(500).json({ error: "failed to update post number" })
+                return res.status(500).json({ error: "err.message" })
             })
-    })
-        .catch(err => {
-            return res.status(500).json({ error: err.message })
+
+    } else {
+        let blog = new Blog({
+            title,
+            des,
+            banner,
+            content,
+            tags,
+            author: authorId,
+            blog_id,
+            draft: Boolean(draft)
+
         })
+
+        blog.save().then(blog => {
+
+            let increamentVal = draft ? 0 : 1;
+
+            User.findOneAndUpdate({ _id: authorId }, { $inc: { "account_info.total_posts": increamentVal }, $push: { "blogs": blog._id } })
+                .then(user => {
+                    return res.status(200).json({ id: blog.blog_id })
+                })
+                .catch(err => {
+                    return res.status(500).json({ error: "failed to update post number" })
+                })
+        })
+            .catch(err => {
+                return res.status(500).json({ error: err.message })
+            })
 
     }
 
-   
+
 
 })
 
@@ -481,7 +481,7 @@ server.post("/get-blog", (req, res) => {
 
     let { blog_id, draft, mode } = req.body;
 
-    let incrementVal = mode!='edit' ? 1 : 0;
+    let incrementVal = mode != 'edit' ? 1 : 0;
 
     Blog.findOneAndUpdate({ blog_id }, { $inc: { "activity.total_reads": incrementVal } })
         .populate("author", "personal_info.fullname personal_info.username personal_info.profile_img")
@@ -495,9 +495,9 @@ server.post("/get-blog", (req, res) => {
                     return res.status(500).json({ error: err.message })
                 })
 
-                if(blog.draft && !draft){
-                    return res.status(500).json({ error: 'you cannot access draft blogs.' })
-                }
+            if (blog.draft && !draft) {
+                return res.status(500).json({ error: 'you cannot access draft blogs.' })
+            }
 
             return res.status(200).json({ blog });
         })
@@ -512,17 +512,17 @@ server.post("/get-blog", (req, res) => {
 
 server.post('/generateTag', async (req, res) => {
 
-try {
-    
-    const {des} = req.body;
+    try {
+
+        const { des } = req.body;
 
         const prompt = ` Generate tags for the following description related to the topic of food such that it can be classified into these following appropriate tags namely, Food-Recipe,Food-Review,Restaurant-Review blog:\n"${des}"\nTags:`;
 
-    
-    const response = await openai.chat.completions.create({
-        model:'gpt-3.5-turbo',
-        messages: [
-          { role: "system", content: "you are an AI capable of  Generating tags for the food blog description that will be provided, also generate tags without hashtags in the beginning and limit the number of tags generated to atmost 2. Generate tags based on the relevance in a sorted order please be carefull and remove hastags from the ouput generated do  not add hashtags with the output generated "},
+
+        const response = await openai.chat.completions.create({
+            model: 'gpt-3.5-turbo',
+            messages: [
+                { role: "system", content: "you are an AI capable of  Generating tags for the food blog description that will be provided, also generate tags without hashtags in the beginning and limit the number of tags generated to atmost 2. Generate tags based on the relevance in a sorted order please be carefull and remove hastags from the ouput generated do  not add hashtags with the output generated " },
 
                 { role: "user", content: prompt },
             ],
@@ -531,12 +531,12 @@ try {
 
 
 
-    const tags = response.choices[0].message.content.split(" ").slice(0,4);
-   
-    return res.json({tags:tags});
+        const tags = response.choices[0].message.content.split(" ").slice(0, 4);
 
-  } catch (error) {
-    console.error('Error generating tags:', error);
+        return res.json({ tags: tags });
+
+    } catch (error) {
+        console.error('Error generating tags:', error);
 
 
         return res.json({ error: 'An error occurred while generating tags' });
@@ -546,38 +546,84 @@ try {
 
 })
 
-server.post('/generateSummary',async (req,res)=>{
+server.post('/generateSummary', async (req, res) => {
 
-try {
-    
-    const {contents} = req.body;
-    
-    const prompt = ` Generate summary for the following blog related to the topic namely, Food-Recipe,Food-Review,Restaurant-Review blog:\n"${contents}"\nTags:`;
+    try {
 
-    
-    const response = await openai.chat.completions.create({
-        model:'gpt-3.5-turbo',
-        messages: [
-          { role: "system", content: "you are an AI capable of  generating summary for the a blog that will be provided, generate summary that is relevant to the blog content and generate summary that is between 300 and 400 characters in length "},
+        const { contents } = req.body;
 
-          { role: "user", content: prompt },
-        ]
-        
-      });
-
-    const summary =response.choices[0].message.content
-    return  res.json({summary:summary})
-
-    
-
-  } catch (error) {
-    console.error('Error generating tags:', error);
+        const prompt = ` Generate summary for the following blog related to the topic namely, Food-Recipe,Food-Review,Restaurant-Review blog:\n"${contents}"\nTags:`;
 
 
-    return res.json({ error: 'An error occurred while generating tags' });
-  }
+        const response = await openai.chat.completions.create({
+            model: 'gpt-3.5-turbo',
+            messages: [
+                { role: "system", content: "you are an AI capable of  generating summary for the a blog that will be provided, generate summary that is relevant to the blog content and generate summary that is between 300 and 400 characters in length " },
+
+                { role: "user", content: prompt },
+            ]
+
+        });
+
+        const summary = response.choices[0].message.content
+        return res.json({ summary: summary })
+
+
+
+    } catch (error) {
+        console.error('Error generating tags:', error);
+
+
+        return res.json({ error: 'An error occurred while generating tags' });
+    }
 })
 
+
+server.post("/like-blog", verifyJWT, (req, res) => {
+    let user_id = req.user;
+
+    let { _id, isLikedByUser } = req.body;
+
+    let incrementVal = !isLikedByUser ? 1 : -1;
+
+    Blog.findOneAndUpdate({ _id }, { $inc: { "activity.total_likes": incrementVal } }).then(blog => {
+        if (!isLikedByUser) {
+            let like = new Notification({
+                type: "like",
+                blog: _id,
+                notification_for: blog.author,
+                user: user_id
+            })
+
+            like.save().then(notification => {
+                return res.status(200).json({ liked_by_user: true })
+            })
+        } else{
+
+            Notification.findOneAndDelete({user: user_id, blog: _id, type: "like"})
+            .then(data => {
+                return res.status(200).json({liked_by_user: false})
+            })
+            .catch(err => {
+                return res.status(500).json({ error: err.message });
+            })
+        }
+    })
+})
+
+server.post("/isliked-by-user", verifyJWT, (req, res) => {
+    let user_id = req.user;
+
+    let { _id } = req.body;
+
+    Notification.exists({user: user_id, type: "like", blog: _id})
+    .then(result => {
+        return res.status(200).json({result})
+    })
+    .catch(err => {
+        return res.status(500).json({error: err.message})
+    })
+})
 
 server.listen(PORT, () => {
     console.log('listening on port -> ' + PORT);
