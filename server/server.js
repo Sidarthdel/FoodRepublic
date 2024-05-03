@@ -12,6 +12,7 @@ import { OpenAI } from "openai";
 import User from './Schema/User.js';
 import Blog from './Schema/Blog.js';
 import Notification from "./Schema/Notification.js"
+import Comment from "./Schema/Comment.js"
 import { getAuth } from 'firebase-admin/auth';
 
 const server = express();
@@ -401,6 +402,77 @@ server.post("/search-blogs-count", (req, res) => {
         })
 }
 )
+
+server.post("/update-profile-img", verifyJWT, (req,res) => {
+    
+    let {url} = req.body;
+
+    User.findOneAndUpdate({ _id: req.user }, { "personal_info.profile_img": url })
+    .then(() => {
+        return res.status(200).json({profile_img: url})
+    })
+    .catch(err => {
+        console.log(err)
+        return res.status(500).json({error: "Can't upload"})
+    })
+})
+
+server.post('/update-profile', verifyJWT, (req,res) => {
+
+    let { username, bio, social_links } = req.body;
+
+    let bioLimit = 150;
+
+    if(username.length < 3){
+        return res.status(403).json({ error: "Username should be at least 3 letters long"})
+    }
+
+    if(bio.length > bioLimit){
+        return res.status(403).json({ error: `Bio should not be more than ${bioLimit} characters`});
+    }
+
+    let socialLinksArr = Object.keys(social_links);
+    console.log(socialLinksArr);
+
+    try{
+
+        for(let i = 0; i < socialLinksArr.length; i++){
+            if(social_links[socialLinksArr[i]].length){
+                let hostname = new URL(social_links[socialLinksArr[i]]).hostname;
+
+                console.log(hostname);
+
+                if(!hostname.includes(`${socialLinksArr[i]}.com`) && socialLinksArr[i] != 'website'){
+                    return res.status(403).json( {error: `${socialLinksArr[i]} link is invalid. You must enter a full link.`} )
+                }
+            }
+        }
+
+    }catch(err){
+        return res.status(500).json({ error: "You must provide full social links with http(s) included"})
+    }
+
+    let updateObj = {
+        "personal_info.username": username,
+        "personal_info.bio": bio,
+        social_links
+    }
+
+    User.findOneAndUpdate({ _id: req.user }, updateObj, {
+        runValidators: true
+    })
+    .then(() => {
+        return res.status(200).json({ username })
+    })
+    .catch(err => {
+        if(err.code == 11000){
+            return res.status(409).json({ error: "username is already taken"})
+        }
+        return res.status(500).json({ error: err.message})
+    })
+
+})
+
 server.post('/create-blog', verifyJWT, (req, res) => {
 
     let authorId = req.user;
@@ -625,6 +697,75 @@ server.post("/isliked-by-user", verifyJWT, (req, res) => {
     })
 })
 
+server.post("/user-written-blogs", verifyJWT, (req,res) => {
+
+    let user_id = req.user;
+
+    let { page, draft, query, deletedDocCount } = req.body;
+
+    let maxLimit = 5;
+    let skipDocs = (page - 1) * maxLimit;
+
+    if(deletedDocCount){
+        skipDocs -= deletedDocCount;
+    }
+
+    Blog.find({ author: user_id, draft, title: new RegExp(query, 'i')})
+    .skip(skipDocs)
+    .limit(maxLimit)
+    .sort({ publishedAt: -1 })
+    .select(" title banner publishedAt blog_id activity des draft -_id ")
+    .then(blogs => {
+        return res.status(200).json({ blogs })
+    })
+    .catch(err => {
+        return res.status(500).json({ error: err.message })
+    })
+})
+
+server.post("/user-written-blogs-count", verifyJWT, (req,res) => {
+    
+    let user_id = req.user;
+
+    let { draft, query } = req.body;
+
+    Blog.countDocuments({ author: user_id, draft, title: new RegExp(query, 'i')})
+    .then(count => {
+        return res.status(200).json({ totalDocs: count })
+    })
+    .catch(err => {
+        console.log(err.message);
+        return res.status(500).json({ error: err.message});
+    })
+})
+
+server.post("/delete-blog",verifyJWT, (req,res) => {
+
+    let user_id = req.user;
+    let { blog_id } = req.body;
+
+    Blog.findOneAndDelete({ blog_id })
+    .then(blog => {
+
+        Notification.deleteMany({ blog: blog._id }).then(data => console.log('notifications deleted'));
+        console.log('level - 1')
+
+        Comment.deleteMany({ blog_id: blog._id }).then(data => console.log('comments deleted'));
+        console.log("level-2")
+
+        User.findOneAndUpdate({ _id: user_id }, { $pull: { blog: blog._id }, $inc: { "account_info.total_posts": -1 }})
+        .then(user => console.log('Blog deleted'));
+
+        return res.status(200).json({ status: 'done' });
+
+    })
+    .catch(err => {
+        return res.status(500).json({ error: err.message })
+    })
+
+})
+
 server.listen(PORT, () => {
     console.log('listening on port -> ' + PORT);
 })
+ 

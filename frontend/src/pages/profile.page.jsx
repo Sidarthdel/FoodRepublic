@@ -47,6 +47,7 @@ const ProfilePage = () => {
     const fetchUserProfile = () => {
         axios.post(import.meta.env.VITE_SERVER_DOMAIN + "/get-profile",{ username: profileId })
         .then(({  data: user}) => {
+            
             if(user != null){
                 setProfile(user);
             }
