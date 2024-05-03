@@ -1,15 +1,18 @@
 import { Link, useNavigate, useParams } from "react-router-dom";
-import logo from "../imgs/restaurant.png";
+import darkLogo from "../imgs/restaurant.png";
+import lightLogo from "../imgs/restaurant-modified.png";
 import { useContext, useEffect } from "react";
 import AnimationWrapper from "../common/page-animation";
-import defaultBanner from "../imgs/blog banner.png";
+import lightBanner from "../imgs/blog banner light.png";
+import darkBanner from "../imgs/blog banner dark.png";
+
 import { EditorContext } from "../pages/editor.pages";
 import EditorJS from "@editorjs/editorjs";
 import { tools } from "./tools.component";
 import { toast, Toaster } from "react-hot-toast";
 import { uploadImage } from "../common/aws";
 import axios from "axios";
-import { UserContext } from "../App";
+import { ThemeContext, UserContext } from "../App";
 
 const BlogEditor = () => {
   let {
@@ -22,6 +25,7 @@ const BlogEditor = () => {
   } = useContext(EditorContext);
 
   let { userAuth: {access_token} } = useContext(UserContext)
+  let {theme} = useContext(ThemeContext);
   let { blog_id } = useParams();
 
   let navigate = useNavigate();
@@ -79,7 +83,7 @@ const BlogEditor = () => {
   const handleError = (e) => {
     let img = e.target;
 
-    img.src = defaultBanner;
+    img.src = theme == "light" ? lightBanner : darkBanner;
   };
 
   const handlePublishEvent = () => {
@@ -165,7 +169,7 @@ const BlogEditor = () => {
       <Toaster />
       <nav className="navbar">
         <Link to="/" className="flex-none w-10">
-          <img src={logo} className="w-full" />
+          <img src={theme== "light" ? darkLogo : lightLogo} className="w-full" />
         </Link>
         <p className="max-md:hidden text-black line-clamp-1 w-full">
           {title.length ? title : "untitled"}
@@ -205,7 +209,7 @@ const BlogEditor = () => {
             <textarea
               name=""
               id=""
-              className="text-4xl font-medium w-full h-20 outline-none resize-none mt-10 leading-tight placeholder:opacity-40"
+              className="text-4xl font-medium w-full h-20 outline-none resize-none mt-10 leading-tight placeholder:opacity-40 bg-white"
               defaultValue={title}
               onKeyDown={handleTitleKeyDown}
               placeholder="Blog Title"
