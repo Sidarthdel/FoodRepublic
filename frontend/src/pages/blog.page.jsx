@@ -28,10 +28,10 @@ const BlogPage = () => {
     const [blog, setBlog] = useState(blogStructure);
     const [similarBlogs, setSimilarBlogs] = useState(null);
     const [loading, setLoading] = useState(true);
-    const[isSummaryGenerated, setIsSummaryGenerated] = useState(false);
-    const[islikedByUser, setLikedByUser ] = useState(false);
-    const[ commentsWrapper, setCommentsWrapper ] = useState(false)
-    const[ totalParentCommentsLoaded, setTotalParentCommentsLoaded ] = useState(0)
+    const [isSummaryGenerated, setIsSummaryGenerated] = useState(false);
+    const [islikedByUser, setLikedByUser ] = useState(false);
+    const [commentsWrapper, setCommentsWrapper ] = useState(false)
+    const [totalParentCommentsLoaded, setTotalParentCommentsLoaded ] = useState(0)
 
     let { title, content, banner, author: {personal_info: {fullname, username: author_username, profile_img}}, publishedAt } = blog;
 

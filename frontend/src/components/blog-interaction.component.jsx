@@ -25,7 +25,17 @@ const BlogInteraction = () => {
     useEffect(() => {
       if( access_token ){
           //make request to server to get like information
-
+          axios.post(import.meta.env.VITE_SERVER_DOMAIN + "/isliked-by-user", { _id }, {
+            headers:{
+              'Authorization': `Bearer ${access_token}`
+            }
+          })
+          .then(({data: { result }}) => {
+            setLikedByUser(Boolean(result))
+          })
+          .catch(err => {
+            console.log(err);
+          })
       }
 
     }, [])
@@ -34,8 +44,10 @@ const BlogInteraction = () => {
 
       if(access_token){
         //like the blog
-        setLikedByUser(preVal => !preVal) 
+        setLikedByUser(preVal => !preVal);
+
         !islikedByUser ? total_likes++ : total_likes--;
+
         setBlog({ ...blog, activity: { ...activity, total_likes } })
 
         axios.post(import.meta.env.VITE_SERVER_DOMAIN + "/like-blog", {
