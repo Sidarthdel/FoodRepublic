@@ -128,3 +128,6 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+
+./server/food-republic-16951-firebase-adminsdk-6ru9h-80ac4c04ee.json
